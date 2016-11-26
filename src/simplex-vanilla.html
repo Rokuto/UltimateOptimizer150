@@ -9,6 +9,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="simplex-vanilla">
@@ -16,22 +19,197 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <style include="shared-styles">
       :host {
         display: block;
-
         padding: 10px;
+      }
+      .flex-horizontal {
+        @apply(--layout-horizontal);
+      }
+      .flexchild {
+        @apply(--layout-flex);
+      }
+      .flex-wrap {
+        @apply(--layout-horizontal);
+        @apply(--layout-wrap);
+        width: 100%;
+      }
+    </style>
+    <style is="custom-style">
+      paper-button.custom {
+        --paper-button-ink-color: var(--paper-pink-a200);
+        /* These could also be individually defined for each of the
+          specific css classes, but we'll just do it once as an example */
+        --paper-button-flat-keyboard-focus: {
+          background-color: var(--paper-pink-a200);
+          color: white !important;
+        };
+        --paper-button-raised-keyboard-focus: {
+          background-color: var(--paper-pink-a200) !important;
+          color: white !important;
+        };
+      }
+      paper-button.custom:hover {
+        background-color: var(--paper-indigo-100);
+      }
+      paper-button.indigo {
+        background-color: var(--paper-indigo-500);
+        color: white;
+        --paper-button-raised-keyboard-focus: {
+          background-color: var(--paper-pink-a200) !important;
+          color: white !important;
+        };
+      }
+      paper-button.disabled {
+        color: white;
       }
     </style>
 
     <div class="card">
-      <div class="circle">2</div>
-      <h1>View Two</h1>
-      <p>Ea duis bonorum nec, falli paulo aliquid ei eum.</p>
-      <p>Id nam odio natum malorum, tibique copiosae expetenda mel ea.Detracto suavitate repudiandae no eum. Id adhuc minim soluta nam.Id nam odio natum malorum, tibique copiosae expetenda mel ea.</p>
+      <h1>Simplex</h1>
+
+      <div class="container flex-horizontal">
+        <div class="flexchild">Maximized</div>
+          <div>
+            <paper-toggle-button checked="{{isMax}}"></paper-toggle-button>
+          </div>
+        </div>
+        
+        <div class="container flex-horizontal">
+          <div class="flexchild">Number of objects to keep track</div>
+          <div>
+            <paper-input 
+              auto-Validate 
+              error-message="Numbers from 0 to positive infinity only"
+              pattern="[0-9]*(\.[0-9]+)?" 
+              value="{{xCount}}"
+              on-change="buildArrayZ" 
+            >
+            </paper-input>
+          </div>
+        </div>
+
+      <div class="container flex-wrap">
+        <template is="dom-repeat" items="{{xs}}">
+          <paper-input 
+            auto-Validate 
+            error-message="Integer Only"
+            pattern="-?[0-9]*(\.[0-9]+)?" 
+            value="{{item.value}}"
+            on-change="buildArrayZ" 
+            style="min-width:50px"
+          >
+            <div suffix>{{item.suf}}</div>
+          </paper-input>
+        </template>      
+      </div>
+
+      <div class="container flex-wrap">
+        <div class="flexchild">Add a constraint</div>
+        <paper-button  on-tap="addConstraints" raised class="custom indigo">raised</paper-button>
+      </div>
+
+      <div class="container flex-wrap">
+          <!-- <div>{{cstrs.0.value}}</div> -->
+        <template is="dom-repeat" items="{{cstrs}}" as="linearSystem">
+          <!-- <div>{{index}}</div> -->
+          <!-- <div>{{linearSystem.value}}</div> -->
+          
+          <template is="dom-repeat" items="{{linearSystem.ls}}" as="lSystem">
+            <div>{{lSystem.value}}</div>
+          </template>
+         
+          
+        </template>
+      </div>
+
+      <template is="dom-if" if="{{showInstruction}}">
+      </template>
     </div>
+
+  
   </template>
 
   <script>
     Polymer({
-      is: 'simplex-vanilla'
+        is: 'simplex-vanilla',
+        properties: {
+          isMax: {
+            type: Boolean,
+            value: true
+          },
+          xCount: {
+            type: Number,
+            value: 0
+          },
+          xs: {
+            type: Object,
+            value: []
+          },
+          cstrs: {
+            type: Array,
+            value: [  ]
+          }
+        },
+
+        ready: function(){
+
+        },
+
+        buildArrayZ: function(){
+          /* This function creates an array for the Z  */
+          var arrX = [];
+          /* Create the xs */
+          for (var i = 0; i < this.xCount; i++) {
+            var objX = {};
+            objX["value"] = 0; // set the default value to zero
+            
+            /* The suffix per term */
+            objX["suf"] = " * x" + i + " + "; // for all 
+            if(i == this.xCount - 1){
+              objX["suf"] = " * x" + i + " = Z"; // for last
+            }
+            arrX.push(objX); // add to the array
+          };
+          this.xs = arrX; // make it global
+          // console.log(this.xs);
+        },
+
+        addConstraints: function(){
+          var arrX = [];   
+
+          /* copy this.cstrs to arrX */
+          for (var i = 0; i < this.cstrs.length; i++) {
+            var arrY = [];
+            for (var j = 0; j < this.cstrs[i].ls.length; j++) {
+              console.log(this.cstrs[i].ls[j].value);
+              var objY = {};
+              objY["value"] = this.cstrs[i].ls[j].value;
+              arrY.push(objY);
+            };
+            var objX = {};
+            objX["ls"] = arrY;
+            arrX.push(objX);
+          };
+            console.log(arrX);
+
+
+
+          var objX = {};
+            
+          var arrY = [];
+          for (var i = 0; i < this.xCount; i++) {
+            var objY = {};
+            objY["value"] = 0;
+            arrY.push(objY);
+          };
+
+          objX["ls"] = arrY; // for all
+          
+          if( objX.ls.length > 0 ){
+            arrX.push(objX); // add to the array
+            this.cstrs = arrX; // make it global
+            console.log(this.cstrs);
+          }
+        }
     });
   </script>
 </dom-module>
